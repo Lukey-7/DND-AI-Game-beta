@@ -1,0 +1,6 @@
+{
+  "name": "Choose Your Own Adventure Engine",
+  "description": "An infinite choose-your-own-adventure text game powered by Gemini, featuring real-time generated consistent art, automatic inventory tracking, and dynamic quests.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
