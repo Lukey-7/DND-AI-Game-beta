@@ -11,7 +11,7 @@ app.use(express.json({ limit: "15mb" }));
 
 const PORT = 3000;
 
-// Initialize Google Gemini API Client
+// Initialize Gemini API Client
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) {
   console.warn("Warning: GEMINI_API_KEY environment variable is not set. Ensure it is configured in Secrets.");
@@ -21,7 +21,7 @@ const ai = new GoogleGenAI({
   apiKey: apiKey || "",
   httpOptions: {
     headers: {
-      "User-Agent": "aistudio-build",
+      "User-Agent": "dnd-ai-game",
     },
   },
 });
