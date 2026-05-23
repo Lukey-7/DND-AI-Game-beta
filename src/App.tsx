@@ -14,6 +14,16 @@ import {
   Clock
 } from "lucide-react";
 
+const BASE_ATTRIBUTES = {
+  vitality: 20,
+  maxVitality: 20,
+  insight: 10,
+  corruption: 0,
+};
+
+const isDefeated = (attributes: typeof BASE_ATTRIBUTES) =>
+  attributes.vitality <= 0 || attributes.corruption >= 100;
+
 export default function App() {
   // Setup and configurations
   const [gameStarted, setGameStarted] = useState(false);
@@ -33,12 +43,7 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState("");
 
   // Simulated live character attributes aligned with theme
-  const [attributes, setAttributes] = useState({
-    vitality: 20,
-    maxVitality: 20,
-    insight: 10,
-    corruption: 0,
-  });
+  const [attributes, setAttributes] = useState(() => ({ ...BASE_ATTRIBUTES }));
   const [isGameOver, setIsGameOver] = useState(false);
   const gameOverTitle = attributes.vitality <= 0 ? "Vitality Depleted" : "Corruption Overwhelms";
   const gameOverMessage =
@@ -49,14 +54,9 @@ export default function App() {
   // Automatically parse and update stats depending on current text outcome
   const scanNarrativeImpact = (storyText: string, actionText: string, isBeginning: boolean) => {
     if (isBeginning) {
-      const baseline = {
-        vitality: 20,
-        maxVitality: 20,
-        insight: 10,
-        corruption: 0,
-      };
+      const baseline = { ...BASE_ATTRIBUTES };
       setAttributes(baseline);
-      setIsGameOver(false);
+      setIsGameOver(isDefeated(baseline));
       return;
     }
 
@@ -134,7 +134,7 @@ export default function App() {
       }
 
       const nextAttributes = { vitality, maxVitality, insight, corruption };
-      setIsGameOver(nextAttributes.vitality <= 0 || nextAttributes.corruption >= 100);
+      setIsGameOver(isDefeated(nextAttributes));
       return nextAttributes;
     });
   };
