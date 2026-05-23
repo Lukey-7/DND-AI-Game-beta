@@ -1,20 +1,26 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# DND AI Game (Beta)
 
-# Run and deploy your AI Studio app
+An infinite choose-your-own-adventure experience with AI-generated storytelling, adaptive inventory tracking, and dynamic scene art.
 
-This contains everything you need to run your app locally.
+## Requirements
 
-View your app in AI Studio: https://ai.studio/apps/a736dcc7-ca89-4ad7-a2a8-fc2205b90b5d
+- Node.js
+- A Gemini API key
 
-## Run Locally
-
-**Prerequisites:**  Node.js
-
+## Run locally
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Copy `.env.example` to `.env`:
+   `cp .env.example .env`
+3. Replace `MY_GEMINI_API_KEY` in `.env` with your actual key.
+4. Start the dev server:
    `npm run dev`
+5. Open `http://localhost:3000`.
+
+## Build and run
+
+1. Build the app:
+   `npm run build`
+2. Start the production server:
+   `npm run start`

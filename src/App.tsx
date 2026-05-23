@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import { GameSetup } from "./components/GameSetup";
@@ -13,6 +13,16 @@ import {
   AlertCircle,
   Clock
 } from "lucide-react";
+
+const BASE_ATTRIBUTES = {
+  vitality: 20,
+  maxVitality: 20,
+  insight: 10,
+  corruption: 0,
+};
+
+const isDefeated = (attributes: typeof BASE_ATTRIBUTES) =>
+  attributes.vitality <= 0 || attributes.corruption >= 100;
 
 export default function App() {
   // Setup and configurations
@@ -33,22 +43,20 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState("");
 
   // Simulated live character attributes aligned with theme
-  const [attributes, setAttributes] = useState({
-    vitality: 20,
-    maxVitality: 20,
-    insight: 10,
-    corruption: 0,
-  });
+  const [attributes, setAttributes] = useState(() => ({ ...BASE_ATTRIBUTES }));
+  const [isGameOver, setIsGameOver] = useState(false);
+  const gameOverTitle = attributes.vitality <= 0 ? "Vitality Depleted" : "Corruption Overwhelms";
+  const gameOverMessage =
+    attributes.vitality <= 0
+      ? "Your strength fades and the chronicle fractures. Recover your footing in a new journey."
+      : "The shadow overtakes you and the chronicle dissolves. Cleanse your path in a new journey.";
 
   // Automatically parse and update stats depending on current text outcome
   const scanNarrativeImpact = (storyText: string, actionText: string, isBeginning: boolean) => {
     if (isBeginning) {
-      setAttributes({
-        vitality: 20,
-        maxVitality: 20,
-        insight: 10,
-        corruption: 0,
-      });
+      const baseline = { ...BASE_ATTRIBUTES };
+      setAttributes(baseline);
+      setIsGameOver(isDefeated(baseline));
       return;
     }
 
@@ -72,7 +80,7 @@ export default function App() {
       ) {
         // physical hazard
         const damage = Math.floor(Math.random() * 3) + 1; // 1-3 damage
-        vitality = Math.max(3, vitality - damage);
+        vitality = Math.max(0, vitality - damage);
       } else if (
         combined.includes("potion") ||
         combined.includes("heal") ||
@@ -125,7 +133,9 @@ export default function App() {
         corruption = Math.max(0, corruption - Math.floor(Math.random() * 8) - 4);
       }
 
-      return { vitality, maxVitality, insight, corruption };
+      const nextAttributes = { vitality, maxVitality, insight, corruption };
+      setIsGameOver(isDefeated(nextAttributes));
+      return nextAttributes;
     });
   };
 
@@ -222,7 +232,7 @@ export default function App() {
 
   // Progress narrative step-by-step
   const handleProgressChronicle = async (chosenOptionText: string) => {
-    if (loading || !config || !currentScene) return;
+    if (loading || !config || !currentScene || isGameOver) return;
 
     setLoading(true);
     setErrorMsg("");
@@ -282,13 +292,13 @@ export default function App() {
   // Submit completely customized text action
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customAction.trim() || loading) return;
+    if (!customAction.trim() || loading || isGameOver) return;
     handleProgressChronicle(customAction.trim());
   };
 
   // Trigger using inventory item
   const handleUseItem = (itemName: string) => {
-    if (loading) return;
+    if (loading || isGameOver) return;
     // Formulates beautiful action query
     const formulatedAction = `I carefully use my [${itemName}] to attempt to bypass or overcome this situation.`;
     handleProgressChronicle(formulatedAction);
@@ -300,6 +310,8 @@ export default function App() {
     setHistory([]);
     setConfig(null);
     setErrorMsg("");
+    setCustomAction("");
+    setIsGameOver(false);
   };
 
   return (
@@ -436,6 +448,20 @@ export default function App() {
                 <p className="mt-5 text-zinc-500 italic text-[11px] font-sans">
                   What action do you deploy, {config?.characterDetails?.split(",")[0]?.split(" ")[1] || "Hero"}?
                 </p>
+                {isGameOver && (
+                  <div className="mt-6 w-full border border-amber-500/30 bg-amber-500/10 rounded-sm px-4 py-3 text-left animate-fadein">
+                    <h3 className="text-xs font-bold text-amber-300 uppercase tracking-widest font-mono">
+                      {gameOverTitle}
+                    </h3>
+                    <p className="text-xs text-amber-100/80 mt-1 leading-relaxed">{gameOverMessage}</p>
+                    <button
+                      onClick={handleResetGame}
+                      className="mt-3 px-3 py-1.5 bg-zinc-950 border border-amber-500/40 text-amber-200 text-[10px] uppercase tracking-widest font-mono hover:bg-amber-500/10 transition-colors rounded-sm"
+                    >
+                      Begin New Journey
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* HIGH-DENSITY CHOICE SELECTION INTERFACE */}
@@ -459,7 +485,8 @@ export default function App() {
                         key={option.id || idx}
                         id={`option_choice_${idx + 1}`}
                         onClick={() => handleProgressChronicle(option.text)}
-                        className="h-16 px-5 border border-zinc-850 hover:border-zinc-550 bg-zinc-950/70 hover:bg-zinc-900 text-left flex items-center group cursor-pointer transition-all rounded-sm relative"
+                        disabled={isGameOver}
+                        className="h-16 px-5 border border-zinc-850 hover:border-zinc-550 bg-zinc-950/70 hover:bg-zinc-900 text-left flex items-center group cursor-pointer transition-all rounded-sm relative disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-zinc-950/70 disabled:hover:border-zinc-850"
                       >
                         <span className="w-7 text-zinc-600 text-xs font-mono group-hover:text-amber-500 transition-colors">
                           0{idx + 1}
@@ -485,14 +512,15 @@ export default function App() {
                         type="text"
                         value={customAction}
                         onChange={(e) => setCustomAction(e.target.value)}
-                        placeholder="Forge your own path... Type any custom action (e.g. 'I cast a light spell on Elara's hand')"
+                        placeholder={isGameOver ? "Begin a new journey to issue commands." : "Forge your own path... Type any custom action (e.g. 'I cast a light spell on Elara's hand')"}
                         id="custom_action_input"
                         className="flex-1 bg-zinc-950 border border-zinc-850 rounded-sm px-4 py-2.5 text-xs text-zinc-300 focus:outline-none focus:border-zinc-650 font-mono tracking-wide placeholder:text-zinc-600"
                         maxLength={180}
+                        disabled={isGameOver}
                       />
                       <button
                         type="submit"
-                        disabled={!customAction.trim()}
+                        disabled={!customAction.trim() || isGameOver}
                         id="custom_action_submit"
                         className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-zinc-300 hover:text-white border border-zinc-850 hover:border-zinc-700 rounded-sm text-xs font-mono transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
                       >
