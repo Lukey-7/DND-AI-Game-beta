@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Header } from "./components/Header";
 import { Sidebar } from "./components/Sidebar";
 import { GameSetup } from "./components/GameSetup";
@@ -39,7 +39,7 @@ export default function App() {
     insight: 10,
     corruption: 0,
   });
-  const isGameOver = attributes.vitality <= 0 || attributes.corruption >= 100;
+  const [isGameOver, setIsGameOver] = useState(false);
   const gameOverTitle = attributes.vitality <= 0 ? "Vitality Depleted" : "Corruption Overwhelms";
   const gameOverMessage =
     attributes.vitality <= 0
@@ -49,12 +49,14 @@ export default function App() {
   // Automatically parse and update stats depending on current text outcome
   const scanNarrativeImpact = (storyText: string, actionText: string, isBeginning: boolean) => {
     if (isBeginning) {
-      setAttributes({
+      const baseline = {
         vitality: 20,
         maxVitality: 20,
         insight: 10,
         corruption: 0,
-      });
+      };
+      setAttributes(baseline);
+      setIsGameOver(false);
       return;
     }
 
@@ -131,7 +133,9 @@ export default function App() {
         corruption = Math.max(0, corruption - Math.floor(Math.random() * 8) - 4);
       }
 
-      return { vitality, maxVitality, insight, corruption };
+      const nextAttributes = { vitality, maxVitality, insight, corruption };
+      setIsGameOver(nextAttributes.vitality <= 0 || nextAttributes.corruption >= 100);
+      return nextAttributes;
     });
   };
 
@@ -306,6 +310,8 @@ export default function App() {
     setHistory([]);
     setConfig(null);
     setErrorMsg("");
+    setCustomAction("");
+    setIsGameOver(false);
   };
 
   return (
